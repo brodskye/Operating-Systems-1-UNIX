@@ -1,0 +1,223 @@
+#!/bin/bash
+#Name: David Jansen
+#Class: CS 344
+#Assignment: 1
+#Date: 7/8/2017
+#Description: Creating a bash shell script that is able to compute the average and median of both the rows and colums of a user input file.
+
+#This piece code was supplied to us, pretty much what it is doing is getting either a file or direct input from the user and it is inputting it in to a temporary file called datafile that I can than use in order to get the averages and medians from the input rows and columns
+
+datafilepath="datafile$$"
+
+#creating a new file from user input. 
+if [ "$#" = "1" ] 
+then
+	
+	cat > "$datafilepath"
+#If the input is a file make a copy of it.
+elif [ "$#" = "2" ]
+then
+	cp "$2" "$datafilepath"
+fi
+
+#this is where I trap the temporary file to remove it.
+trap "{ rm -f $datafilepath; }" EXIT
+
+
+#Checking to see if the user is using the correct input of either columns or rows (used the and operator because I am checking if they are not using either).
+if [[ $1 != -c* && $1 != -r* ]] 
+then
+	echo "./stats {-rows|-cols} [file]"
+	exit 1
+
+
+#checking to see if the file that the user is inputing exists and/or is readable.
+elif [[ "$#" -eq 2 && ! -r "$2" ]]
+then
+	echo "./stats: cannot read $2"
+	exit 1
+
+
+
+
+
+#If the user chooses to compute the columns statistics go here.
+elif [[ $1 == -c* ]];
+then
+	
+	count=0
+	rowcount=0
+	counter=0
+	sum=0
+
+#This while loop was implemented so I can find both the count for the number of rows and the number of columns so I can use those variables later.
+		while read num
+		do
+			#For the number of numbers in the first row add 1 to my column count.
+			for i in $num
+			do
+				columncount=`expr $columncount + 1`
+			done
+			#For every row in the file add 1 to my row count.
+			rowcount=`expr $rowcount + 1`
+		done < $datafilepath
+u
+		#divide my column count (actually is the count of how many numbers there are in total) by rowcount to find the number of columns there are.
+		columns=`expr $columncount / $rowcount`
+
+
+#This for loop runs for the amount of columns that are present in the input file so I can put each column in to a single array.  This way I can manipulate a single array rather than multiple in order to find the averages and medians of the columns
+		for ((i=0; i <$columns; i++))
+		do
+
+			while read num2
+			do
+				temparray=($num2)
+				counter=`expr $counter + 1`
+
+			#This is where I created my single array of all the columns.
+				Array[$counter]=${temparray[$i]}
+			done < $datafilepath
+			
+			
+			
+			
+#I implemented bubble sort here in the exact same way that I did on the rows in order to have my array be sorted so I could find the median.
+			
+			#right here I am adding up my sum variable
+			for k in ${Array[@]}
+			do
+				let sum+=$k
+			done
+			
+			for ((a = 0; a <= $rowcount; a++))
+			do
+				for ((b = $a; b<= $rowcount; b++))
+				do
+				#Again the compiler didn't like the syntax for my array in the if statement so I set variables to each number
+					num1=${Array[$a]}
+					num2=${Array[$b]}
+
+
+					if [[ $num1 -gt $num2 ]];u
+					then
+				#Swapping numbers if the one in front of the one next to it is larger.
+					temp=${Array[$a]}
+					Array[$a]=${Array[$b]}
+					Array[$b]=$temp
+					fi
+				done
+			done
+
+			#Calculating where the middle of the column is.
+			mid=$(( ($rowcount / 2) + 1))
+
+			#Calculating the average of the column.
+			average=$(( ($sum + ($rowcount / 2 )) / $rowcount ))
+
+#I had to create arrays for the averages and medians that I got in order to print them on a single line.
+			avg[$i]=$average
+			med[$i]=${Array[$mid]}
+			
+			
+#reset our sum and counter variables to 0 for the next column
+		sum=0
+		counter=0
+		
+		done
+
+
+#printing the averages in a single line use the printf command and a for loop to go through the averages array.
+	echo "Averages:"
+
+	for ((j = 0; j <= $rowcount; j++))
+	do
+		printf "%s	" "${avg[$j]}"
+	done
+
+	echo " "
+
+
+#printing the medians in a single line using the printf command and a for loop to go through the medians array.
+	echo "Medians:"
+	
+	for ((i = 0; i <= $rowcount; i++))
+	do
+		printf "%s	"  "${med[$i]}"
+	done
+		echo " "
+
+
+#If the user chooses to compute the rows statistics go here.
+elif [[ $1 == -r* ]];
+thenu
+	
+	echo "Average	Median";
+	Total=0
+	counter=0
+	
+
+#Here I am feeding in one line of the file at a time so I can get the averages and medians of each row.
+	while read num
+	do
+		sum=0
+		counter=0
+
+		#For loop that allows me to grab each number from the line that is fed in from the while loop above.  
+		for i in $num
+		do
+		#Sums up the numbers in each row.
+			sum=`expr $sum + $i`
+		#Counts the amount of numbers in each row.
+			counter=`expr $counter + 1`
+		#Created an array of all the values here so I could implement the bubble sort below.
+			Array[$counter]=$i
+		done
+	
+
+#I could not figure out how to get the sort command to work for me so I decided to implement a simple sorting algorithm (bubble sort)		
+		
+		#Nested for loop that is required for bubble sort.
+		for ((i = 0; i <= $counter; i++))
+		do
+		for ((j = $i; j <= $counter; j++))
+		do
+
+			#For some reason the if statement did not like it when I directly put the number at the position in my array in the statement so I set variables to those numbers.
+			num1=${Array[$i]}
+			num2=${Array[$j]}		
+
+			#checking to see if the number that comes first in the array is bigger than the one next to it, if it is swap the two.
+			if [[ $num1 -gt $num2 ]];
+			then
+			#You must use a temporary variable to hold one of the numbers in order to properly swap two numbers. 
+			temp=${Array[$i]}
+			Array[$i]=${Array[$j]}
+			Array[$j]=$temp
+			fi
+
+		done
+	done
+
+	mid=$(( ($counter / 2) + 1))
+	
+	
+#Outputs the average and median seperate by a tab because that is how it is displayed in the assignment.
+	echo "$(( ($sum + ($counter / 2)) / $counter ))" "	" "${Array[$mid]}"
+
+
+#Reset my counter and sum variables for the next line of the file.  
+	counter=0
+	sum=0
+	done < $datafilepath
+
+
+#If the user inputs anything else it will show them the correct format for input.  
+else
+	echo "./stats: {-rows|-cols} [file]";
+	exit 1
+fi
+
+#Here is another area where I remove the temporary files.
+rm -f "datafile$$"
+rm -f $datafilepath

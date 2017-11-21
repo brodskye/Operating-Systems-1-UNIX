@@ -1,8 +1,6 @@
 /**********************************************************************************************************************************************************************************
  *Name: David Jansen
  *Date: 9/12/2017
- *Classe: CS344
- *Assignment: #4
  *Description: This program grabs the data from the encrypted file and the key file, sends them to be decrypted, recieves the decrypted array and prints it to stdout.
  * ********************************************************************************************************************************************************************************/
 #include <stdio.h>
